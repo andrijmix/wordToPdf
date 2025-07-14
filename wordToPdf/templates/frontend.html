@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Word to PDF</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      text-align: center;
+      background: #f8f9fa;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .file-upload-block {
+      max-width: 500px;
+      margin: 0 auto 20px auto;
+      text-align: left;
+    }
+
+    .file-upload-label {
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .file-upload-label i {
+      margin-right: 8px;
+    }
+
+    .file-upload-wrapper {
+      border: 2px dashed #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      background: #fefefe;
+    }
+
+    .file-upload-input {
+      width: 100%;
+      font-size: 1em;
+    }
+
+    .file-upload-hint {
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 1em;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    #progress {
+      margin-top: 20px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📄 Word to PDF Converter</h1>
+
+  <form id="uploadForm">
+    <div class="file-upload-block">
+      <label class="file-upload-label" for="fileInput">
+        <i>🧾</i> Оберіть файл Word (.doc, .docx):
+      </label>
+      <div class="file-upload-wrapper">
+        <input class="file-upload-input" type="file" id="fileInput" name="files" multiple accept=".doc,.docx" required>
+      </div>
+      <div class="file-upload-hint">
+        Можна обрати кілька файлів (макс. 1500MB).
+      </div>
+    </div>
+
+    <button type="submit">Конвертувати</button>
+  </form>
+
+  <div id="progress"></div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const progress = document.getElementById("progress");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      progress.textContent = "⏳ Завантаження і конвертація...";
+
+      try {
+        const res = await fetch("/convert", {
+          method: "POST",
+          body: formData
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "converted.zip";
+          link.click();
+          progress.textContent = "✅ Файл завантажено: converted.zip";
+        } else {
+          const error = await res.json();
+          progress.textContent = "❌ Помилка: " + error.error;
+        }
+      } catch (err) {
+        progress.textContent = "❌ Сервер недоступний або сталася помилка.";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -5,7 +5,8 @@ import subprocess
 from multiprocessing import Pool, cpu_count
 from pathlib import Path
 from tqdm import tqdm
-
+from PyPDF2 import PdfReader
+import re
 
 def load_config(path="config.txt"):
     config = {}
