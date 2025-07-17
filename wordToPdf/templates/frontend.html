@@ -29,10 +29,6 @@
       font-size: 1rem;
     }
 
-    .file-upload-label i {
-      margin-right: 8px;
-    }
-
     .file-upload-wrapper {
       border: 2px dashed #ccc;
       padding: 15px;
@@ -72,6 +68,18 @@
       margin-top: 20px;
       font-size: 1rem;
     }
+
+    progress {
+      width: 100%;
+      max-width: 500px;
+      height: 20px;
+      margin-top: 10px;
+    }
+
+    #cancelBtn {
+      margin-left: 10px;
+      background: #e74c3c;
+    }
   </style>
 </head>
 <body>
@@ -80,49 +88,93 @@
   <form id="uploadForm">
     <div class="file-upload-block">
       <label class="file-upload-label" for="fileInput">
-        <i>🧾</i> Оберіть файл Word (.doc, .docx):
+        <i>🗂️</i> Оберіть папку або ZIP-архів (.doc, .docx, .zip):
       </label>
       <div class="file-upload-wrapper">
-        <input class="file-upload-input" type="file" id="fileInput" name="files" multiple accept=".doc,.docx" required>
+        <input class="file-upload-input" type="file" id="fileInput" name="files" accept=".doc,.docx,.zip" required>
       </div>
       <div class="file-upload-hint">
-        Можна обрати кілька файлів (макс. 1500MB).
+        Можна завантажити папку або ZIP-файл (до 1500MB).
       </div>
     </div>
 
-    <button type="submit">Конвертувати</button>
+    <button type="submit" id="submitBtn">Конвертувати</button>
+    <button type="button" id="cancelBtn">Зупинити</button>
   </form>
 
+  <progress id="uploadProgress" value="0" max="100" style="display:none;"></progress>
   <div id="progress"></div>
 
   <script>
     const form = document.getElementById("uploadForm");
     const progress = document.getElementById("progress");
+    const progressBar = document.getElementById("uploadProgress");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const submitBtn = document.getElementById("submitBtn");
+
+    let xhr = null;
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      progress.textContent = "";
+      progressBar.value = 0;
+      progressBar.style.display = "block";
+
       const formData = new FormData(form);
-      progress.textContent = "⏳ Завантаження і конвертація...";
+      xhr = new XMLHttpRequest();
 
-      try {
-        const res = await fetch("/convert", {
-          method: "POST",
-          body: formData
-        });
+      xhr.upload.onprogress = function (event) {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          progressBar.value = percent;
+          progress.textContent = `📤 Завантаження: ${percent}%`;
+        }
+      };
 
-        if (res.ok) {
-          const blob = await res.blob();
+      xhr.onloadstart = function () {
+        progress.textContent = "📤 Завантаження: 0%";
+      };
+
+      xhr.onload = function () {
+        progress.textContent = "⏳ Обробка і конвертація...";
+
+        if (xhr.status === 200) {
+          const blob = xhr.response;
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
           link.download = "converted.zip";
           link.click();
-          progress.textContent = "✅ Файл завантажено: converted.zip";
+          progress.textContent = "✅ Завантажено: converted.zip";
         } else {
-          const error = await res.json();
-          progress.textContent = "❌ Помилка: " + error.error;
+          try {
+            const err = JSON.parse(xhr.responseText);
+            progress.textContent = "❌ Помилка: " + err.error;
+          } catch {
+            progress.textContent = "❌ Помилка: неможливо обробити запит.";
+          }
         }
-      } catch (err) {
+
+        progressBar.style.display = "none";
+        xhr = null;
+      };
+
+      xhr.onerror = function () {
         progress.textContent = "❌ Сервер недоступний або сталася помилка.";
+        progressBar.style.display = "none";
+        xhr = null;
+      };
+
+      xhr.open("POST", "/convert");
+      xhr.responseType = "blob";
+      xhr.send(formData);
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      if (xhr) {
+        xhr.abort();
+        progress.textContent = "⛔️ Завантаження зупинено користувачем.";
+        progressBar.style.display = "none";
+        xhr = null;
       }
     });
   </script>
