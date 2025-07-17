@@ -7,6 +7,8 @@ import tempfile
 import subprocess
 from pathlib import Path
 from multiprocessing import Pool, cpu_count
+import unicodedata
+import re
 
 app = Flask(__name__, template_folder="templates")
 UPLOAD_FOLDER = Path("../uploads")
@@ -56,8 +58,8 @@ def convert():
             return jsonify({"error": "No files uploaded"}), 400
 
         print("🧹 Cleaning old folders...")
-        shutil.rmtree(UPLOAD_FOLDER, ignore_errors=True)
-        shutil.rmtree(OUTPUT_FOLDER, ignore_errors=True)
+        clean_folder(UPLOAD_FOLDER)
+        clean_folder(OUTPUT_FOLDER)
 
         UPLOAD_FOLDER.mkdir(exist_ok=True)
         OUTPUT_FOLDER.mkdir(exist_ok=True)
@@ -67,10 +69,12 @@ def convert():
         # Save uploaded files
         print("💾 Saving uploaded files...")
         for file in uploaded_files:
-            filename = secure_filename(file.filename)
+
+            filename = safe_filename(file.filename)
             file_path = UPLOAD_FOLDER / filename
             file.save(file_path)
-
+            print(f"📝 Original filename: {file.filename}")
+            print(f"🔐 Safe filename: {filename}")
             if file_path.suffix.lower() == ".zip":
                 print(f"📦 Extracting zip: {filename}")
                 extract_zip_to_folder(file_path, UPLOAD_FOLDER)
@@ -101,6 +105,7 @@ def convert():
 
         # Check for any PDF output
         pdf_files = list(OUTPUT_FOLDER.glob("*.pdf"))
+        print("📄 PDFs to archive:", [p.name for p in pdf_files])
         if not pdf_files:
             return jsonify({"error": "No PDF files were generated."}), 500
 
@@ -110,6 +115,7 @@ def convert():
         with zipfile.ZipFile(zip_path, "w") as zipf:
             for pdf in pdf_files:
                 zipf.write(pdf, pdf.name)
+        print("📦 ZIP created:", zip_path.exists())
 
         if not zip_path.exists():
             print("🚨 ZIP file was not created.")
@@ -126,7 +132,24 @@ def convert():
         print(f"🚨 Unhandled exception: {e}")
         return jsonify({"error": str(e)}), 500
 
+def clean_folder(folder):
+    if folder.exists():
+        for f in folder.glob("*"):
+            if f.is_file():
+                f.unlink()
+            elif f.is_dir():
+                shutil.rmtree(f)
+    else:
+        folder.mkdir(exist_ok=True)
 
+
+def safe_filename(filename):
+    # transliterate to ASCII
+    nfkd_form = unicodedata.normalize('NFKD', filename)
+    only_ascii = nfkd_form.encode('ASCII', 'ignore').decode('ASCII')
+    # remove invalid characters
+    safe = re.sub(r'[^a-zA-Z0-9_.-]', '_', only_ascii)
+    return safe or "uploaded.docx"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=63342)

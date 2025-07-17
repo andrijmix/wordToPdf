@@ -91,7 +91,7 @@
         <i>🗂️</i> Оберіть папку або ZIP-архів (.doc, .docx, .zip):
       </label>
       <div class="file-upload-wrapper">
-        <input class="file-upload-input" type="file" id="fileInput" name="files" accept=".doc,.docx,.zip" required>
+        <input class="file-upload-input" type="file" id="fileInput" name="files" accept=".doc,.docx,.zip" multiple rquired>
       </div>
       <div class="file-upload-hint">
         Можна завантажити папку або ZIP-файл (до 1500MB).
@@ -163,7 +163,9 @@
         progressBar.style.display = "none";
         xhr = null;
       };
-
+      for (let pair of formData.entries()) {
+  console.log(`📦 Uploading: ${pair[0]} =>`, pair[1]);
+}
       xhr.open("POST", "/convert");
       xhr.responseType = "blob";
       xhr.send(formData);
