@@ -1,17 +1,18 @@
 import shutil
 import zipfile
-
+import threading
 from flask import Blueprint, request, render_template, redirect, url_for, flash, current_app
 from flask.views import MethodView
 from pathlib import Path
 import os
 import uuid
-
+import time
 upload_bp = Blueprint("upload", __name__)
 
 class UploadView(MethodView):
-    def __init__(self, allowed_extensions):
+    def __init__(self, allowed_extensions, on_upload_done=None):
         self.allowed_extensions = allowed_extensions
+        self.on_upload_done = on_upload_done
 
     def get(self):
         session_id = request.args.get("session_id", "")
@@ -34,7 +35,6 @@ class UploadView(MethodView):
             if ext in self.allowed_extensions:
                 file_path = os.path.join(session_folder, filename)
                 file.save(file_path)
-
                 if ext == ".zip":
                     try:
                         with zipfile.ZipFile(file_path, "r") as zip_ref:
@@ -46,7 +46,7 @@ class UploadView(MethodView):
             else:
                 flash(f"{filename} skipped (not allowed).")
 
-        # Delete files not in allowed extensions
+        # Delete file_service not in allowed extensions
         for item in os.listdir(session_folder):
             ext = Path(item).suffix.lower()
             if ext not in self.allowed_extensions and ext != ".pdf":
@@ -55,11 +55,21 @@ class UploadView(MethodView):
                     os.remove(file_path)
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
-
+        print(f"🛠 Виклик on_upload_done з session_id={session_id}")
+        if self.on_upload_done:
+            print(f"🛠 Виклик on_upload_done з session_id={session_id}")
+            threading.Thread(target=self.on_upload_done, args=(session_id,), daemon=True).start()
         flash("Files processed.")
-        return redirect(url_for("upload.upload", session_id=session_id))
+        print(f"🔁 Redirecting to /?session_id={session_id}")
+        return redirect(f"/?session_id={session_id}")
+
+
 
 # реєстрація
-upload_view = UploadView.as_view("upload", allowed_extensions={".pdf", ".zip"})
-upload_bp.add_url_rule("/", view_func=upload_view, methods=["GET", "POST"])
-upload_bp.add_url_rule("/upload", view_func=upload_view, methods=["POST"])
+# upload_view = UploadView.as_view(
+#     "upload",
+#     allowed_extensions={".pdf", ".zip"}
+#     on_upload_done=after_upload_action
+# )
+# upload_bp.add_url_rule("/", view_func=upload_view, methods=["GET", "POST"])
+#upload_bp.add_url_rule("/upload", view_func=upload_view, methods=["POST"])

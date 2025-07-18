@@ -17,7 +17,7 @@ class DownloadView(MethodView):
 
         files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
         if not files:
-            flash("No files to download.")
+            flash("No file_service to download.")
             return redirect(url_for("upload.upload"))
 
         zip_filename = f"result_{session_id}.zip"
@@ -47,4 +47,4 @@ class FileListView(MethodView):
 
 # маршрути
 download_bp.add_url_rule("/download/<session_id>", view_func=DownloadView.as_view("download"))
-download_bp.add_url_rule("/files/<session_id>", view_func=FileListView.as_view("file_list"))
+download_bp.add_url_rule("/file_service/<session_id>", view_func=FileListView.as_view("file_list"))

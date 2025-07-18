@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Service</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg">
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">📁 File Service</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="mb-4 space-y-2">
+          {% for message in messages %}
+            <li class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Upload form -->
+    <form action="/upload" method="post" enctype="multipart/form-data" class="space-y-4 mb-6">
+      <div>
+        <label class="block text-gray-700 mb-1 font-medium" for="files">Select files to upload:</label>
+        <input type="file" name="files" multiple required class="w-full p-2 border border-gray-300 rounded-lg bg-white" id="files">
+      </div>
+      <button type="submit"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+        🔼 Upload to Server
+      </button>
+    </form>
+
+    <!-- Download form -->
+    <form method="get" action="/download/{{ session_id }}" class="space-y-4">
+      <input type="hidden" name="session_id" value="{{ session_id }}">
+      <button type="submit"
+              class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50"
+              {% if not session_id %}disabled{% endif %}>
+        🔽 Download My Files as ZIP
+      </button>
+    </form>
+
+    {% if not session_id %}
+      <p class="text-center text-gray-500 text-sm mt-4">Upload files first to enable the download button.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

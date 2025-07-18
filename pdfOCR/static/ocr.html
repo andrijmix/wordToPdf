@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF OCR Converter</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin-top: 60px;
+    }
+    .error { color: red; }
+    #progressBar {
+      width: 80%;
+      height: 10px;
+      background: #eee;
+      margin: 20px auto;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #progressFill {
+      width: 0%;
+      height: 100%;
+      background: #2196F3;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📄 PDF OCR Converter</h1>
+  <p>📁 Оберіть ZIP-файл із PDF-файлами:</p>
+  <input type="file" id="zipInput" accept=".zip" />
+  <br><br>
+  <button onclick="startOCR()">▶️ Виконати OCR</button>
+
+  <div id="progressBar"><div id="progressFill"></div></div>
+  <p id="statusText"></p>
+
+  <script>
+    function startOCR() {
+const fileInput = document.getElementById('zipInput');
+const formData = new FormData();
+formData.append('file', fileInput.files[0]);
+
+      if (!file) {
+        alert("Оберіть файл");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file); // ім'я поля саме 'file'
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/upload", true);
+
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          document.getElementById("progressFill").style.width = percent + "%";
+          document.getElementById("statusText").innerText = `Завантаження: ${Math.round(percent)}%`;
+        }
+      };
+
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          document.getElementById("statusText").innerText = "✅ Обробка завершена. Завантаження...";
+          window.location.href = "/download";
+        } else {
+          document.getElementById("statusText").innerText = "❌ Помилка: не вдалося обробити архів.";
+        }
+      };
+
+      xhr.onerror = function () {
+        document.getElementById("statusText").innerText = "❌ Помилка з'єднання.";
+      };
+
+      xhr.send(formData);
+    }
+  </script>
+
+</body>
+</html>
