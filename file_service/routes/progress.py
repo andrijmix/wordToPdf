@@ -21,13 +21,21 @@ def get_progress(session_id):
     session_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], session_id)
     progress_file = os.path.join(session_folder, "progress.txt")
 
+    percent = 0
     try:
-        with open(progress_file, "r") as f:
-            percent = int(f.read().strip())
-    except Exception:
-        percent = 0
+        if os.path.exists(progress_file):
+            with open(progress_file, "r", encoding="utf-8") as f:
+                percent = int(f.read().strip())
+
+            # ✅ Якщо 100% — видаляємо файл
+            if percent >= 100:
+                os.remove(progress_file)
+
+    except Exception as e:
+        print(f"⚠️ Error reading progress file: {e}")
 
     return jsonify({"progress": percent})
+
 
 
 @progress_bp.route("/cancel/<session_id>", methods=["POST"])
