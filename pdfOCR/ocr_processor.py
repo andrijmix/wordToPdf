@@ -15,7 +15,13 @@ CONFIG = "-c tessedit_char_whitelist=$€₴₽¥₹£0123456789.,-"
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\a.mikhnevych\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
 
 def list_pdf_files(folder):
-    return [f for f in os.listdir(folder) if f.lower().endswith(".pdf")]
+    pdf_paths = []
+    for root, _, files in os.walk(folder):
+        for file in files:
+            if file.lower().endswith(".pdf"):
+                relative_path = os.path.relpath(os.path.join(root, file), folder)
+                pdf_paths.append(relative_path)
+    return pdf_paths
 
 def is_cancel_requested(folder):
     return os.path.exists(os.path.join(folder, "cancel.txt"))

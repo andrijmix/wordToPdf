@@ -47,14 +47,14 @@ class UploadView(MethodView):
                 flash(f"{filename} skipped (not allowed).")
 
         # Delete file_service not in allowed extensions
-        for item in os.listdir(session_folder):
-            ext = Path(item).suffix.lower()
-            if ext not in self.allowed_extensions and ext != ".pdf":
-                file_path = os.path.join(session_folder, item)
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
+        # for item in os.listdir(session_folder):
+        #     ext = Path(item).suffix.lower()
+        #     if ext not in self.allowed_extensions and ext != ".pdf":
+        #         file_path = os.path.join(session_folder, item)
+        #         if os.path.isfile(file_path):
+        #             os.remove(file_path)
+        #         elif os.path.isdir(file_path):
+        #             shutil.rmtree(file_path)
         print(f"🛠 Виклик on_upload_done з session_id={session_id}")
         if self.on_upload_done:
             print(f"🛠 Виклик on_upload_done з session_id={session_id}")
