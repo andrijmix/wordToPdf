@@ -6,7 +6,14 @@ from threading import Thread
 download_bp = Blueprint("download", __name__)
 import shutil
 def cleanup_session_later(folder_path):
-    shutil.rmtree(folder_path, ignore_errors=True)
+    try:
+        progress_file = os.path.join(folder_path, "progress.txt")
+        if os.path.exists(progress_file):
+            os.remove(progress_file)
+        shutil.rmtree(folder_path, ignore_errors=True)
+        print(f"🧹 Session cleaned up: {folder_path}")
+    except Exception as e:
+        print(f"❌ Cleanup error: {e}")
 
 class DownloadView(MethodView):
     def get(self, session_id):
