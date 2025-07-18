@@ -2,13 +2,13 @@ import os
 import io
 import tempfile
 import shutil
-from pathlib import Path
-from flask import flash
+import threading
 import pytesseract
 import fitz  # PyMuPDF
 from PIL import Image
 import numpy as np
 import cv2
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 TESSERACT_LANG = "eng+ukr+deu+fra+ita+spa"
 CONFIG = "-c tessedit_char_whitelist=$€₴₽¥₹£0123456789.,-"
@@ -19,11 +19,6 @@ def list_pdf_files(folder):
 
 def is_cancel_requested(folder):
     return os.path.exists(os.path.join(folder, "cancel.txt"))
-
-def update_progress(status_file, current, total):
-    percent = int((current / total) * 100)
-    with open(status_file, "w") as f:
-        f.write(str(percent))
 
 def convert_pdf_page_to_ocr_pdf(page):
     pix = page.get_pixmap(dpi=300)
@@ -38,7 +33,7 @@ def convert_pdf_page_to_ocr_pdf(page):
         extension='pdf'
     )
 
-def process_single_pdf(session_folder, pdf_name, status_file, current_index, total_count):
+def process_single_pdf(session_folder, pdf_name):
     pdf_path = os.path.join(session_folder, pdf_name)
     output_path = os.path.join(session_folder, f"ocr_{pdf_name}")
 
@@ -63,7 +58,6 @@ def process_single_pdf(session_folder, pdf_name, status_file, current_index, tot
         os.remove(pdf_path)
 
         print(f"✅ OCR saved: {output_path}")
-        update_progress(status_file, current_index, total_count)
 
     except Exception as e:
         print(f"❌ Error processing {pdf_path}: {e}")
@@ -83,11 +77,25 @@ def ocr_pdf_preserve_structure(session_folder):
 
     status_file = os.path.join(session_folder, "progress.txt")
     total = len(pdf_files)
+    completed = 0
+    lock = threading.Lock()
 
-    for i, pdf_name in enumerate(pdf_files, 1):
+    def task(pdf_name):
+        nonlocal completed
         if is_cancel_requested(session_folder):
             print("❌ OCR canceled by user.")
-            flash("Files processed.")
+            return
+        process_single_pdf(session_folder, pdf_name)
+        with lock:
+            completed += 1
+            percent = int((completed / total) * 100)
+            with open(status_file, "w") as f:
+                f.write(str(percent))
 
-            break
-        process_single_pdf(session_folder, pdf_name, status_file, i, total)
+    max_workers = int(os.cpu_count()/2)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(task, pdf) for pdf in pdf_files]
+        for future in as_completed(futures):
+            future.result()
+
+    print("🎉 All PDFs processed.")
