@@ -56,7 +56,7 @@ def main():
     output_folder.mkdir(parents=True, exist_ok=True)
 
     files = find_word_files(input_folder)
-    print(f"📄 Found {len(files)} Word files.")
+    print(f"📄 Found {len(files)} Word file_service.")
 
     if not files:
         return

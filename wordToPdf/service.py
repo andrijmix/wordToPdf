@@ -53,9 +53,9 @@ def index():
 @app.route("/convert", methods=["POST"])
 def convert():
     try:
-        uploaded_files = request.files.getlist("files")
+        uploaded_files = request.files.getlist("file_service")
         if not uploaded_files:
-            return jsonify({"error": "No files uploaded"}), 400
+            return jsonify({"error": "No file_service uploaded"}), 400
 
         print("🧹 Cleaning old folders...")
         clean_folder(UPLOAD_FOLDER)
@@ -66,8 +66,8 @@ def convert():
 
         word_paths = []
 
-        # Save uploaded files
-        print("💾 Saving uploaded files...")
+        # Save uploaded file_service
+        print("💾 Saving uploaded file_service...")
         for file in uploaded_files:
 
             filename = safe_filename(file.filename)
@@ -81,14 +81,14 @@ def convert():
             elif file_path.suffix.lower() in [".doc", ".docx"]:
                 word_paths.append(file_path)
 
-        # Collect all Word files, including from extracted ZIPs
+        # Collect all Word file_service, including from extracted ZIPs
         for path in UPLOAD_FOLDER.rglob("*"):
             if path.suffix.lower() in [".doc", ".docx"]:
                 word_paths.append(path)
 
         if not word_paths:
-            print("⚠️ No Word files found for conversion.")
-            return jsonify({"error": "No .doc or .docx files found"}), 400
+            print("⚠️ No Word file_service found for conversion.")
+            return jsonify({"error": "No .doc or .docx file_service found"}), 400
 
         print(f"📄 Files to convert: {[str(p.name) for p in word_paths]}")
 
@@ -107,7 +107,7 @@ def convert():
         pdf_files = list(OUTPUT_FOLDER.glob("*.pdf"))
         print("📄 PDFs to archive:", [p.name for p in pdf_files])
         if not pdf_files:
-            return jsonify({"error": "No PDF files were generated."}), 500
+            return jsonify({"error": "No PDF file_service were generated."}), 500
 
         # Zip the converted PDFs
         zip_path = OUTPUT_FOLDER / "converted.zip"
