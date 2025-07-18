@@ -1,18 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>File Service</title>
+  <title>Сервіс Розпізнавання PDF</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
   <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg">
-    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">📁 File Service</h1>
+    <!-- Main heading -->
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">📁 Сервіс Розпізнавання PDF</h1>
 
+    <!-- Flash messages block -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <ul class="mb-4 space-y-2">
           {% for message in messages %}
+            <!-- Display each flash message -->
             <li class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded">{{ message }}</li>
           {% endfor %}
         </ul>
@@ -22,105 +25,54 @@
     <!-- Upload form -->
     <form action="/upload" method="post" enctype="multipart/form-data" class="space-y-4 mb-6">
       <div>
-        <label class="block text-gray-700 mb-1 font-medium" for="files">Select files to upload:</label>
+        <!-- File input label and input field -->
+        <label class="block text-gray-700 mb-1 font-medium" for="files">Оберіть файли для завантаження:</label>
         <input type="file" name="files" multiple required class="w-full p-2 border border-gray-300 rounded-lg bg-white" id="files">
       </div>
+      <!-- Submit button for file upload -->
       <button type="submit"
               class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-        🔼 Upload to Server
+        🔼 Завантажити на сервер
       </button>
     </form>
 
     <!-- Download form -->
     <form method="get" action="/download/{{ session_id }}" class="space-y-4">
       <input type="hidden" name="session_id" value="{{ session_id }}">
+      <!-- Submit button for download -->
       <button type="submit"
               class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50"
               {% if not session_id %}disabled{% endif %}>
-        🔽 Download My Files as ZIP
+        🔽 Завантажити ZIP архів
       </button>
     </form>
 
-    <!-- Progress bar -->
+    <!-- Progress bar section (shown only if session_id is available) -->
     {% if session_id %}
     <div class="mt-6">
+      <!-- Empty progress bar background -->
       <div class="w-full bg-gray-200 rounded-full h-4">
+        <!-- Filled progress bar element -->
         <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%;"></div>
       </div>
-      <p id="progress-text" class="text-sm text-center mt-2 text-gray-600">OCR Progress: 0%</p>
+      <!-- Progress text label -->
+      <p id="progress-text" class="text-sm text-center mt-2 text-gray-600">Прогрес OCR: 0%</p>
+      <!-- Cancel button, hidden by default -->
       <button id="cancel-btn" class="mt-3 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg hidden">
-        ❌ Cancel OCR
+        ❌ Скасувати OCR
       </button>
     </div>
     {% endif %}
 
+    <!-- Instruction when no session_id present -->
     {% if not session_id %}
-      <p class="text-center text-gray-500 text-sm mt-4">Upload files first to enable the download button.</p>
+      <p class="text-center text-gray-500 text-sm mt-4">Спочатку завантажте файли, щоб активувати кнопку завантаження.</p>
     {% endif %}
   </div>
 
   <script>
+    // Last time we fetched progress metadata
     let lastModified = 0;
     const sessionId = "{{ session_id }}";
 
-    function checkProgressChanges(sessionId) {
-      fetch(`/progress_meta/${sessionId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.last_modified > lastModified) {
-            lastModified = data.last_modified;
-            fetchProgress(sessionId);
-          }
-        });
-    }
-
-    function fetchProgress(sessionId) {
-      fetch(`/progress/${sessionId}`)
-        .then(response => response.json())
-        .then(data => {
-          const bar = document.getElementById("progress-bar");
-          const text = document.getElementById("progress-text");
-          const cancelBtn = document.getElementById("cancel-btn");
-
-          if (bar && text) {
-            bar.style.width = `${data.progress}%`;
-            text.innerText = `OCR Progress: ${data.progress}%`;
-
-            if (data.progress > 0 && data.progress < 100) {
-              cancelBtn.classList.remove("hidden");
-            } else {
-              cancelBtn.classList.add("hidden");
-            }
-          }
-        });
-    }
-
-    function startSmartProgressPolling(sessionId) {
-      setInterval(() => {
-        checkProgressChanges(sessionId);
-      }, 60*1000);
-    }
-
-    if (sessionId) {
-      startSmartProgressPolling(sessionId);
-    }
-
-    document.getElementById("cancel-btn")?.addEventListener("click", () => {
-      fetch(`/cancel/${sessionId}`, { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
-          alert("OCR process will cancel.");
-        });
-    });
-
-      const downloadBtn = document.querySelector("form[action^='/download'] button");
-  if (downloadBtn) {
-    downloadBtn.addEventListener("click", () => {
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 3000); // повернення через 3 секунди (коли файл почне завантажуватись)
-    });
-  }
-  </script>
-</body>
-</html>
+    // Check if there was an update to progress met
