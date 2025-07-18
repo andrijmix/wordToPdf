@@ -112,6 +112,15 @@
           alert("OCR process will cancel.");
         });
     });
+
+      const downloadBtn = document.querySelector("form[action^='/download'] button");
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", () => {
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 3000); // повернення через 3 секунди (коли файл почне завантажуватись)
+    });
+  }
   </script>
 </body>
 </html>
