@@ -1,5 +1,4 @@
 from flask import Flask, current_app
-from config import Config
 from file_service.routes.download import download_bp
 from file_service.routes.upload import upload_bp, UploadView
 from file_service.routes.progress import progress_bp
@@ -8,8 +7,10 @@ import os
 
 
 
+
 app = Flask(__name__)
-app.config.from_object(Config)
+app.config["SECRET_KEY"] = "dev"  # для flash-повідомлень
+app.config["UPLOAD_FOLDER"] = os.path.join(os.path.dirname(__file__), "uploads")
 
 # Створюємо папку для завантажень, якщо не існує
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
