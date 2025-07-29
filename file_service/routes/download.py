@@ -3,6 +3,10 @@ from flask.views import MethodView
 import os
 import zipfile
 from threading import Thread
+
+from multipart import file_path
+from reportlab.lib.pagesizes import elevenSeventeen
+
 download_bp = Blueprint("download", __name__)
 import shutil
 def cleanup_session_later(folder_path):
@@ -24,19 +28,24 @@ class DownloadView(MethodView):
 
         files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
         if not files:
-            flash("No file_service to download.")
+            flash("No files to download.")
             return redirect(url_for("upload.upload"))
 
-        zip_filename = f"result_{session_id}.zip"
-        zip_path = os.path.join(folder, zip_filename)
+        if len(files) == 1:
+            # Один файл – повертаємо його напряму
+            file_path = os.path.join(folder, files[0])
+            response = send_file(file_path, as_attachment=True)
+        else:
+            # Більше одного – створюємо архів
+            zip_filename = f"result_{session_id}.zip"
+            zip_path = os.path.join(folder, zip_filename)
+            with zipfile.ZipFile(zip_path, "w") as zipf:
+                for fname in files:
+                    if not fname.endswith(".zip"):
+                        zipf.write(os.path.join(folder, fname), arcname=fname)
+            response = send_file(zip_path, as_attachment=True)
 
-        with zipfile.ZipFile(zip_path, "w") as zipf:
-            for fname in files:
-                if not fname.endswith(".zip"):
-                    zipf.write(os.path.join(folder, fname), arcname=fname)
-        response = send_file(zip_path, as_attachment=True)
         Thread(target=cleanup_session_later, args=(folder,)).start()
-
         return response
 
 class FileListView(MethodView):
