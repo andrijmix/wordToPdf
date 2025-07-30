@@ -10,13 +10,16 @@ import time
 upload_bp = Blueprint("upload", __name__)
 
 class UploadView(MethodView):
-    def __init__(self, allowed_extensions, on_upload_done=None):
+    def __init__(self, allowed_extensions,title,header, description, on_upload_done=None,):
         self.allowed_extensions = allowed_extensions
         self.on_upload_done = on_upload_done
-
+        self.title = title
+        self.header = header
+        self.description = description
     def get(self):
         session_id = request.args.get("session_id", "")
-        return render_template("upload.html", session_id=session_id)
+        return render_template("upload.html",title=self.title,header=self.header,
+                               description=self.description, session_id=session_id)
 
     def post(self):
         files = request.files.getlist("files")
@@ -44,17 +47,8 @@ class UploadView(MethodView):
                         flash(f"{filename} is not a valid ZIP file.")
                         os.remove(file_path)
             else:
-                flash(f"{filename} skipped (not allowed).")
-
-        # Delete file_service not in allowed extensions
-        # for item in os.listdir(session_folder):
-        #     ext = Path(item).suffix.lower()
-        #     if ext not in self.allowed_extensions and ext != ".pdf":
-        #         file_path = os.path.join(session_folder, item)
-        #         if os.path.isfile(file_path):
-        #             os.remove(file_path)
-        #         elif os.path.isdir(file_path):
-        #             shutil.rmtree(file_path)
+                flash(f"{filename} формат файлу не двозвлений, очікується {self.allowed_extensions}.")
+                return redirect(url_for("upload.upload"))
         print(f"🛠 Виклик on_upload_done з session_id={session_id}")
         if self.on_upload_done:
             print(f"🛠 Виклик on_upload_done з session_id={session_id}")
@@ -64,12 +58,3 @@ class UploadView(MethodView):
         return redirect(f"/?session_id={session_id}")
 
 
-
-# реєстрація
-# upload_view = UploadView.as_view(
-#     "upload",
-#     allowed_extensions={".pdf", ".zip"}
-#     on_upload_done=after_upload_action
-# )
-# upload_bp.add_url_rule("/", view_func=upload_view, methods=["GET", "POST"])
-#upload_bp.add_url_rule("/upload", view_func=upload_view, methods=["POST"])
