@@ -1,9 +1,11 @@
-from flask import Flask, current_app
+import os
+
+from flask import Flask
+
 from discountCalculator.main import main
 from file_service.routes.download import download_bp
-from file_service.routes.upload import upload_bp, UploadView
 from file_service.routes.progress import progress_bp
-import os
+from file_service.routes.upload import upload_bp, UploadView
 
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
 app = Flask(__name__, template_folder=template_dir)

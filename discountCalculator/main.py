@@ -1,14 +1,15 @@
-from calculation import DiscountCalculator
-from loadExcel import load_excel
+from discountCalculator.calculation import DiscountCalculator
+from discountCalculator.loadExcel import load_excel
 from configparser import ConfigParser
 from pathlib import Path
 import pandas as pd
-
+import os
 
 def main(input_file=None, output_file=None):
     print("🔍 Starting discount calculation...")
     config = ConfigParser()
-    config.read('config.ini', encoding='utf-8')
+    config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+    config.read(config_path, encoding='utf-8')
     input_path = Path(input_file)
     if input_path.is_dir():
         excel_files = list(input_path.glob("*.xlsx"))
@@ -94,12 +95,12 @@ def compare():
     pd.set_option('display.max_rows', None)
     print("\n📊 Порівняння дисконту (тільки зміни):")
     print(changed_only)
-# if __name__     == "__main__":
-#      config = ConfigParser()
-#      config.read('config.ini', encoding='utf-8')
-#      file_name = config['Settings']['FILE_NAME_DISCOUNT']
-#      main(file_name, output_file="discounted_" + file_name)
-#      #print(DiscountCalculator("7146.30", "4200.00").calculate_discount())
-#      compare()
+if __name__     == "__main__":
+     config = ConfigParser()
+     config.read('config.ini', encoding='utf-8')
+     file_name = config['Settings']['FILE_NAME_DISCOUNT']
+     main(file_name, output_file="discounted_" + file_name)
+     #print(DiscountCalculator("7146.30", "4200.00").calculate_discount())
+     compare()
 
 
