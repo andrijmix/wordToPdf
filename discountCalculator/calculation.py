@@ -110,14 +110,25 @@ class DiscountCalculator:
                 return 0.15
 
     def calculate_discount(self):
+        """
+        >>> DiscountCalculator(21000, 5600).calculate_discount()
+        Decimal('15750.00')
+        >>> DiscountCalculator(900000, 5000).calculate_discount()
+        Decimal('5000.00')
+        """
         discount_percentage = Decimal(str(self.get_the_discount()))
         result = self.debt_amount * (Decimal("1.00") - discount_percentage)
-        _discount = float(result.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
-        if debt <1000 or debt > 800000:
-            _discount = self.body_amount
+        _discount = result.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        if self.debt_amount  <1000 or self.debt_amount  > 800000:
+            _discount = self.body_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         return _discount
 
 if __name__ == "__main__":
+
+    import doctest
+    doctest.testmod(verbose=True)
+    #exit()
     # Example usage
     debt = 25036.87  # Example debt amount
     body = 8540.11   # Example body amount
