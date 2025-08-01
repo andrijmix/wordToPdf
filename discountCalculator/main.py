@@ -4,7 +4,7 @@ from configparser import ConfigParser
 from pathlib import Path
 import pandas as pd
 import os
-
+import numpy as np
 def main(input_file=None, output_file=None):
     print("🔍 Starting discount calculation...")
     config = ConfigParser()
@@ -68,15 +68,15 @@ def compare_excel_files(file1, file2, key_columns=None):
 def compare():
     # compare two excel files
     result = compare_excel_files(
-        "discounted_Пул 64-дисконт.xlsx",
-        "ВИЗНАЧЕНИЙ ДИСКОНТ.xlsx",
+        "ТЕСТ_empty.xlsx",
+        "ТЕСТ.xlsx",
         key_columns=["id"]  # або None
     )
 
     # Порівняльна таблиця: старі vs нові значення
     common_ids = result['changed'].index
-    df_old = pd.read_excel('discounted_Пул 64-дисконт.xlsx').set_index('id')
-    df_new = pd.read_excel('ВИЗНАЧЕНИЙ ДИСКОНТ.xlsx').set_index('id')
+    df_old = pd.read_excel('ТЕСТ_empty.xlsx').set_index('id')
+    df_new = pd.read_excel('ТЕСТ.xlsx').set_index('id')
 
     comparison = pd.concat([df_old.loc[common_ids], df_new.loc[common_ids]],
                            axis=1,
@@ -85,15 +85,23 @@ def compare():
     # Порівняння лише "Дисконт (до)"
     discount_comparison = comparison[[("OLD", "Дисконт (до)"), ("NEW", "Дисконт (до)")]].copy()
     discount_comparison.columns = ["OLD_Дисконт", "NEW_Дисконт"]
+    discount_comparison["Сума боргу, грн"] = df_new.loc[common_ids, "Сума боргу, грн"].values
+    discount_comparison["Просрочене тіло, грн"] = df_new.loc[common_ids, "Просрочене тіло, грн"].values
 
     # Обчислити різницю
-    discount_comparison["Різниця"] = discount_comparison["NEW_Дисконт"].astype(float) - discount_comparison[
-        "OLD_Дисконт"].astype(float)
+
 
     # Показати лише ті, де справді щось змінилося
-    changed_only = discount_comparison[discount_comparison["Різниця"] != 0]
+    changed_only = discount_comparison[
+        ~np.isclose(
+            discount_comparison["NEW_Дисконт"].astype(float),
+            discount_comparison["OLD_Дисконт"].astype(float),
+            atol=1e-5
+        )
+    ]
     pd.set_option('display.max_rows', None)
     print("\n📊 Порівняння дисконту (тільки зміни):")
+    print(f"Total changes: {len(changed_only)}")
     print(changed_only)
 if __name__     == "__main__":
      config = ConfigParser()
